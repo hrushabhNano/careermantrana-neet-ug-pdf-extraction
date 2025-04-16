@@ -6,13 +6,15 @@ import sys
 import os
 import tempfile
 from datetime import datetime
+from io import StringIO
 
-# Set up logging
+# Set up logging to capture output in memory
+log_stream = StringIO()
 logging.basicConfig(
     level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('parse_selection_list.log'),
+        logging.StreamHandler(log_stream),
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -200,15 +202,14 @@ def save_to_excel(df, output_file):
     logger.info(f"Data saved to {output_file}")
     return output_file
 
-# Function to read logs (limit to last N lines)
-def read_logs(log_file, max_lines=1000):
+# Function to read logs from memory (limit to last N lines)
+def read_logs(log_stream, max_lines=1000):
     try:
-        with open(log_file, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-            # Return last max_lines lines to avoid overflow
-            return ''.join(lines[-max_lines:])
+        log_stream.seek(0)
+        lines = log_stream.readlines()
+        return ''.join(lines[-max_lines:])
     except Exception as e:
-        return f"Error reading log file: {e}"
+        return f"Error reading logs: {e}"
 
 # Streamlit interface
 def main():
@@ -232,17 +233,17 @@ def main():
 
         /* Style for Process PDF button */
         div.stButton > button {
-        background-color: #8e24aa;
-        color: white !important;
-        border: none;
-        padding: 10px 20px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        margin: 4px 2px;
-        cursor: pointer;
-        border-radius: 4px;
+            background-color: #8e24aa;
+            color: white !important;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
         }
         div.stButton > button:hover {
             background-color: #6b1a82;
@@ -300,6 +301,10 @@ def main():
     uploaded_file = st.file_uploader("Upload a .txt file converted from https://convertio.co/", type=["txt"])
 
     if uploaded_file is not None:
+        # Clear previous logs
+        log_stream.truncate(0)
+        log_stream.seek(0)
+
         # Read the uploaded file
         try:
             text = uploaded_file.read().decode('utf-8')
@@ -320,32 +325,18 @@ def main():
                     excel_file = save_to_excel(df, tmp.name)
 
                 # Read and display logs (limited to last 1000 lines)
-                st.subheader("Processing Logs")
-                logs = read_logs('parse_selection_list.log', max_lines=1000)
-                st.markdown(f'<div class="log-container">{logs}</div>', unsafe_allow_html=True)
-
-                # Create two columns for download buttons
-                col1, col2 = st.columns(2)
-                
-                # Download button for full logs
-                # with col1:
-                #     with open('parse_selection_list.log', 'rb') as f:
-                #         st.download_button(
-                #             label="Download Full Logs",
-                #             data=f,
-                #             file_name=f"parse_selection_list_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log",
-                #             mime="text/plain"
-                #         )
+                # st.subheader("Processing Logs")
+                # logs = read_logs(log_stream, max_lines=1000)
+                # st.markdown(f'<div class="log-container">{logs}</div>', unsafe_allow_html=True)
 
                 # Download button for Excel
-                with col1:
-                    with open(excel_file, 'rb') as f:
-                        st.download_button(
-                            label="Download NEET Excel",
-                            data=f,
-                            file_name=f"selection_list_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                        )
+                with open(excel_file, 'rb') as f:
+                    st.download_button(
+                        label="Download NEET Excel",
+                        data=f,
+                        file_name=f"selection_list_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
 
                 # Clean up temporary file
                 os.unlink(excel_file)
