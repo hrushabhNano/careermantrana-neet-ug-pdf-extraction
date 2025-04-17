@@ -21,7 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 # Valid categories for validation
-VALID_CATEGORIES = {'OBC', 'SC', 'ST', 'SEBC', 'NTC', 'NTD', 'NTB', 'SBC', 'EWS', 'HA', 'VJA', 'SOBC', 'D1', 'D2', 'D3', 'PWD', 'ORP-C', 'HA'}
+VALID_CATEGORIES = {'OBC', 'SC', 'ST', 'SEBC', 'NTC', 'NTD', 'NTB', 'SBC', 'EWS', 'HA', 'VJA', 'SOBC', 'D1', 'D2', 'D3', 'PWD', 'ORP-C', 'SEBCHA', 'SEBCD1', 'SEBCD2', 'D1HA' ,'MKB'}
 
 # Function to parse the text file
 def parse_text_file(text):
@@ -155,7 +155,7 @@ def parse_text_file(text):
                 else:
                     cat = parts[idx]
                     idx += 1
-                    if idx < len(parts) and parts[idx] in {'D1', 'D2', 'D3', 'PWD', 'ORP-C', 'HA'} and cat not in {'D1', 'D2', 'D3', 'PWD', 'ORP-C', 'HA'}:
+                    if idx < len(parts) and parts[idx] in {'D1', 'D2', 'D3', 'PWD', 'ORP-C', 'HA', 'D1HA'} and cat not in {'D1', 'D2', 'D3', 'PWD', 'ORP-C', 'HA', 'D1HA'}:
                         cat += ' ' + parts[idx]
                         idx += 1
             row['Category'] = cat.strip()
